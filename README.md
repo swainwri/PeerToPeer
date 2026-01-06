@@ -1,21 +1,21 @@
-![PeerToPeer Logo](Assets/logo.png)
+![PeerToPeer Logo](Peer2Peer/Assets.xcassets/AppIcon.appiconset/256.png)
 
-PeerToPeer / Peer2Peer
+# PeerToPeer / Peer2Peer
 
 Peer-to-peer file and photo transfer examples for iOS
 
 This repository contains two related iOS sample apps that demonstrate peer-to-peer communication between nearby devices using Apple’s frameworks.
 
-Projects in this repository
+## Projects in this repository
 
-🔹 PeerToPeer (Swift 5)
+### 🔹 PeerToPeer (Swift 5)
 A straightforward Multipeer Connectivity example written in Swift 5.
 	•	Browse and connect to nearby iOS devices
 	•	Select and send files or photos to a peer
 	•	Uses classic delegate-based APIs
 	•	Intended as a clear, minimal reference implementation
 
-🔹 Peer2Peer (Swift 6)
+### 🔹 Peer2Peer (Swift 6)
 A modernised version rewritten to be Swift 6 concurrency compliant.
 	•	Uses structured concurrency and actor isolation
 	•	Demonstrates safe integration of MultipeerConnectivity with Swift 6
@@ -26,7 +26,7 @@ This version exists to show what is required to make legacy peer-to-peer APIs wo
 
 ⸻
 
-Important note on reliability
+## Important note on reliability
 
 These projects are provided for educational and experimental purposes.
 
@@ -39,7 +39,7 @@ For production apps where reliable file transfer is required, an infrastructure-
 
 ⸻
 
-About the logo
+## About the logo
 
 The logo represents direct device-to-device communication:
 	•	Two devices
@@ -50,7 +50,7 @@ It reflects the intent of the project: clear examples, not abstraction-heavy sol
 
 ⸻
 
-Why this repository exists
+## Why this repository exists
 
 Apple provides peer-to-peer APIs, but real-world usage—especially under Swift 6—comes with trade-offs that are rarely documented.
 
