@@ -1,22 +1,22 @@
 //
 //  ViewController.swift
-//  PeerToPeer
+//  Peer2Peer
 //
-//  Created by Steve Wainwright on 06/04/2025.
+//  Created by Steve Wainwright on 06/05/2025.
 //
 
 import UIKit
-import MultipeerConnectivity
 import Photos
 import AudioToolbox
 import ZIPFoundation
 import QuickLook
+@preconcurrency import MultipeerConnectivity
 
 let AVAILABLE_SOUND_FILE_NAME = "available"
 let UNAVAILABLE_SOUND_FILE_NAME = "unavailable"
 
-class ViewController: UIViewController, UINavigationControllerDelegate, MPCManagerDelegate {
-    
+class ViewController: UIViewController, UINavigationControllerDelegate {
+
     @IBOutlet weak var toolbar: UIToolbar?
     @IBOutlet weak var photoBarButtonItem: UIBarButtonItem?
     @IBOutlet weak var cameraBarButtonItem: UIBarButtonItem?
@@ -35,9 +35,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
     @IBOutlet weak var noDevicesLabel: UILabel?
     @IBOutlet weak var myFileToTransferLabel: UILabel?
     @IBOutlet weak var myDeviceNameLabel: UILabel?
+    @IBOutlet weak var statusLabel: UILabel?
    
-    private let mpcManager = MPCManager()
-
     private let deviceHasCamera: Bool = UIImagePickerController.isSourceTypeAvailable(.camera)
     private var transferFileURL: URL?
     private var filesize: Int64 = 0
@@ -54,6 +53,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
         "pages", "numbers", "key" // Apple iWork
     ]
 
+    private let sessionManager = PeerSessionManager()
+    private var peers: [MCPeerID] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -74,21 +76,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
         loadBackgroundImage()
         loadSounds()
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        mpcManager.delegate = self
-        mpcManager.onPeerDiscovered = { isAvailable in
-            if isAvailable {
-                AudioServicesPlaySystemSound(self.availableSound)
-            }
-            else {
-                AudioServicesPlaySystemSound(self.unavailableSound)
-            }
-            self.devicesTable?.reloadData()
-            self.updateTableVisibility()
-        }
         
         self.circularProgressButton?.addTarget(self, action: #selector(onCircularProgressViewTouchUpInside(_ :)), for: .touchUpInside)
         
@@ -101,42 +91,53 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
         
         self.myDeviceNameLabel?.text = "Local Name: \(UIDevice.current.name)"
         self.myFileToTransferLabel?.text = "File to Transfer: " + (transferFileURL?.lastPathComponent ?? "No File Selected")
+        self.statusLabel?.text = "Waiting..."
         
-        mpcManager.startBrowsing()
-        mpcManager.startHosting()
+        sessionManager.onPeerDiscovered = { isAvailable in
+            Task {
+                self.peers.removeAll()
+                self.peers.append(contentsOf: await self.sessionManager.getDiscoveredPeers())
+                await MainActor.run {
+                    if isAvailable {
+                        AudioServicesPlaySystemSound(self.availableSound)
+                    }
+                    else {
+                        AudioServicesPlaySystemSound(self.unavailableSound)
+                    }
+                    self.devicesTable?.reloadData()
+                    self.updateTableVisibility()
+                }
+            }
+        }
+        
+        sessionManager.onInvitationReceived = { [weak self] displayName, vc, completion in
+            Task { @MainActor in
+                let accepted = await self?.showInvitationAlert(from: displayName, on: vc) ?? false
+                completion(accepted)
+            }
+        }
+        
+        Task {
+            await restartSession()
+        }
     }
-    
+
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        mpcManager.stopHosting()
-        mpcManager.stopBrowsing()
-        mpcManager.onPeerDiscovered = nil
+        sessionManager.stop()
+        sessionManager.onPeerDiscovered = nil
     }
-    
-    // MARK: - Send File
-    
-    func sendFile() {
-        if mpcManager.foundPeers.count > 0,
-           let transferFileURL,
-           let session = mpcManager.session {
-            print(session.connectedPeers)
-            print(mpcManager.foundPeers)
-            if session.connectedPeers.count == 1 {
-                mpcManager.sendFileWithMetadataAndProgress(at: transferFileURL, to: session.connectedPeers[0])
-            }
-            else {
-                mpcManager.sendFile(url: transferFileURL, to: mpcManager.foundPeers)
-            }
-        }
-    }
-    
     
     // MARK: - Actions
     
     @IBAction func didTapTransferFile(_ sender: UIBarButtonItem?) {
-        if let _ = transferFileURL {
-            sendFile()
+        Task {
+            let peers = await sessionManager.getDiscoveredPeers()
+            if let transferFileURL,
+               peers.count > 0 {
+                await sessionManager.mpcActor?.sendFile(url: transferFileURL, to: peers)
+            }
         }
     }
     
@@ -159,17 +160,6 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
             }
             imagePicker.view.isUserInteractionEnabled = true
             imagePicker.modalPresentationStyle = .pageSheet
-            //        imagePicker.modalPresentationStyle = .popover
-            //        if let popoverController = imagePicker.popoverPresentationController {
-            //            if #available(iOS 16.0, *) {
-            //                popoverController.sourceItem = self.photoBarButtonItem
-            //            }
-            //            else {
-            //                popoverController.sourceView = self.view
-            //                popoverController.sourceRect = .zero
-            //            }
-            //            popoverController.permittedArrowDirections = .any // Allow any arrow direction
-            //        }
             
             if UIDevice.current.userInterfaceIdiom == .pad {
                 if imageSource == .camera {
@@ -229,158 +219,71 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
         present(previewController, animated: true)
     }
     
-    // MARK: - MPCManager Delegates
+    // MARK: - Invitations
     
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didSendFile fileURL: URL, metadata: FileTransferMetadata, to peer: MCPeerID) {
-        //showAlert(title: "File Sent", message: "\(fileURL.lastPathComponent) sent to \(peer.displayName)")
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didStartSendingFile fileURL: URL, metadata: FileTransferMetadata, to peer: MCPeerID) {
-        self.filesize = metadata.fileSize
-        self.fileContentType = metadata.contentType
-        
-        if let progressView {
-            self.view.sendSubviewToBack(progressView)
-            progressView.isHidden = false
-            circularProgressLabel?.text = "Current Transfer: starting"
-            circularProgressView?.angle = 0.0
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didUpdateProgress progress: Double, forFile fileURL: URL, to peer: MCPeerID) {
-        circularProgressView?.progress = progress
-        if let _ = progressView {
-            circularProgressLabel?.text = "Current Transfer: starting"
-            circularProgressView?.angle = 0.0
-            let newAngleValue = progress * 360.0
-            circularProgressView?.animate(toAngle: newAngleValue, duration: 0.5, completion: nil)
-        }
-    }
-      
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didFinishSendingFile fileURL: URL, metadata: FileTransferMetadata, to peer: MCPeerID) {
-        self.filesize = 0
-        self.fileContentType = ""
-        if let progressView {
-            self.view.bringSubviewToFront(progressView)
-            progressView.isHidden = true
-            circularProgressLabel?.text = "Current Transfer: ending"
-            circularProgressView?.angle = 360.0
-            circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didFailToSendFile fileURL: URL, metadata: FileTransferMetadata?, to peer: MCPeerID, error: Error){
-        showAlert(title: "Send Failed", message: error.localizedDescription)
-        self.fileContentType = ""
-        if let progressView {
-            self.view.bringSubviewToFront(progressView)
-            progressView.isHidden = true
-            circularProgressLabel?.text = "Current Transfer: ending"
-            circularProgressView?.angle = 360.0
-            circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didReceiveFile fileURL: URL, data: Data?, metadata: FileTransferMetadata, filesize: UInt64, from peer: MCPeerID) {
-//        showAlert(title: "File Received", message: "\(fileURL.lastPathComponent) from \(peer.displayName)")
-        saveFile(data, metadata: metadata, fileCacheURL: fileURL, peer: peer)
-        self.filesize = 0
-        self.fileContentType = ""
-        if let progressView {
-            self.view.bringSubviewToFront(progressView)
-            progressView.isHidden = true
-            circularProgressLabel?.text = "Current Transfer: ending"
-            circularProgressView?.angle = 360.0
-            circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didStartReceivingFileNamed filename: String, metadata: FileTransferMetadata, from peer: MCPeerID) {
-        self.filesize = metadata.fileSize
-        self.fileContentType = metadata.contentType
-        
-        if let progressView {
-            self.view.sendSubviewToBack(progressView)
-            progressView.isHidden = false
-            circularProgressLabel?.text = "Current Transfer: starting"
-            circularProgressView?.angle = 0.0
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didUpdateProgress progress: Double, forReceivingFileNamed filename: String, from peer: MCPeerID) {
-        circularProgressView?.progress = progress
-        if let _ = progressView {
-            circularProgressLabel?.text = "Current Transfer: starting"
-            circularProgressView?.angle = 0.0
-            let newAngleValue = progress * 360.0
-            circularProgressView?.animate(toAngle: newAngleValue, duration: 0.5, completion: nil)
-        }
-    }
+    func showInvitationAlert(from displayName: String, on vc: UIViewController) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let alert = UIAlertController(title: "Invitation",
+                                          message: "Accept invitation from \(displayName)?",
+                                          preferredStyle: .alert)
 
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didFinishReceivingFile fileURL: URL, metadata: FileTransferMetadata, from peer: MCPeerID) {
-        saveFile(nil, metadata: metadata, fileCacheURL: fileURL, peer: peer)
-        self.filesize = 0
-        self.fileContentType = ""
-        if let progressView {
-            self.view.bringSubviewToFront(progressView)
-            progressView.isHidden = true
-            circularProgressLabel?.text = "Current Transfer: ending"
-            circularProgressView?.angle = 360.0
-            circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
-        }
-    }
-    
-    @MainActor
-    func mpcManager(_ manager: MPCManager, didFailToReceiveFileNamed filename: String, metadata: FileTransferMetadata?, from peer: MCPeerID, error: any Error) {
-        if let progressView {
-            self.view.bringSubviewToFront(progressView)
-            progressView.isHidden = true
-            circularProgressLabel?.text = "Current Transfer: ending"
-            circularProgressView?.angle = 360.0
-            circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
-        }
-    }
+            var didResume = false
+            
+            let accept = UIAlertAction(title: "Accept", style: .default) { _ in
+                if !didResume {
+                    didResume = true
+                    continuation.resume(returning: true)
+                }
+            }
 
-    private func showAlert(title: String, message: String) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+            let decline = UIAlertAction(title: "Decline", style: .cancel) { _ in
+                if !didResume {
+                    didResume = true
+                    continuation.resume(returning: false)
+                }
+            }
+
+            alert.addAction(accept)
+            alert.addAction(decline)
+
+            vc.present(alert, animated: true) {
+                // If the peer disconnects before user taps, make sure to dismiss alert and cancel continuation
+                Task {
+                    try? await Task.sleep(nanoseconds: 15 * NSEC_PER_SEC) // 15 sec timeout
+                    if !didResume {
+                        didResume = true
+                        vc.dismiss(animated: true)
+                        continuation.resume(returning: false)
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Save File
     
     private func saveFile(_ data: Data?, metadata: FileTransferMetadata, fileCacheURL: URL, peer: MCPeerID) {
-        let appearance = SCLAlertView.SCLAppearance(
-                kWindowWidth: UIDevice.current.userInterfaceIdiom == .phone ? 240.0 : 320.0,
-                kTitleFont: UIFont(name: "HelveticaNeue", size: 20)!,
-                kTextFont: UIFont(name: "HelveticaNeue", size: 16)!,
-                kButtonFont: UIFont(name: "HelveticaNeue-Bold", size: 16)!,
-                showCloseButton: false,
-                shouldAutoDismiss: true,
-                contentViewCornerRadius: CGFloat(5.0),
-                buttonCornerRadius: CGFloat(5.0),
-                contentViewColor: UIColor(red: 0.69, green: 0.769, blue: 0.871, alpha: 1.0),
-                contentViewBorderColor: UIColor(red: 1.00, green: 0.75, blue: 0.793, alpha: 1.0),
-                contentViewAlignment: .left,
-                buttonsLayout: .horizontal
-            )
-        // Initialize SCLAlertView using custom Appearance
-        let alert = SCLAlertView(appearance: appearance)
+//        let appearance = SCLAlertView.SCLAppearance(
+//                kWindowWidth: UIDevice.current.userInterfaceIdiom == .phone ? 240.0 : 320.0,
+//                kTitleFont: UIFont(name: "HelveticaNeue", size: 20)!,
+//                kTextFont: UIFont(name: "HelveticaNeue", size: 16)!,
+//                kButtonFont: UIFont(name: "HelveticaNeue-Bold", size: 16)!,
+//                showCloseButton: false,
+//                shouldAutoDismiss: true,
+//                contentViewCornerRadius: CGFloat(5.0),
+//                buttonCornerRadius: CGFloat(5.0),
+//                contentViewColor: UIColor(red: 0.69, green: 0.769, blue: 0.871, alpha: 1.0),
+//                contentViewBorderColor: UIColor(red: 1.00, green: 0.75, blue: 0.793, alpha: 1.0),
+//                contentViewAlignment: .left,
+//                buttonsLayout: .horizontal
+//            )
+//        // Initialize SCLAlertView using custom Appearance
+//        let alert = SCLAlertView(appearance: appearance)
         var message = ""
         var title = ""
-        
-//            var alert: UIAlertController?
-//            var message = ""
-//            var defaultAction: UIAlertAction?
+        var defaultAction: UIAlertAction?
+        var okAction: UIAlertAction?
+            
         let filename = metadata.filename
         let filemgr = FileManager.default
 
@@ -394,115 +297,110 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
             let saved_url = docsDir.appendingPathComponent(filename)
             if filemgr.fileExists(atPath: saved_url.path) {
                 message = "The file '\(filename)' already exists in the \(directoryName) directory! Do you wish to overwrite it?"
-                //                                    alert = UIAlertController(title: "P2P Transfer Alert", message: message, preferredStyle: .alert)
                 title = "P2P Transfer Alert"
-                //                                    defaultAction = UIAlertAction(title: "No", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
-                //                                    let okAction: UIAlertAction = UIAlertAction(title: "Yes", style: .default, handler: {(_ action: UIAlertAction?) -> Void in
-                //
-                //                                        self.waitToDismissAlert()
-                //
-                //                                        var alert: UIAlertController?
-                //                                        var defaultAction: UIAlertAction?
-                //                                        var message = ""
-                //                                        do {
-                //                                            var local_saved_url: NSURL? = nil
-                //                                            try filemgr.replaceItem(at: saved_url, withItemAt: filenameURL, backupItemName: nil, options: .usingNewMetadataOnly, resultingItemURL: &local_saved_url)
-                //                                            print(local_saved_url ?? "unknown")
-                //                                            message = "File '\(filename)' transfered from \(self.p2pManager?.selectedPeer?.peer.name ?? "Sending Peer") from cache to \(directoryName) directory"
-                //                                            alert = UIAlertController(title: "P2P Transfer Complete", message: message, preferredStyle: .alert)
-                //                                            defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
-                //                                        }
-                //                                        catch {
-                //                                            message = "Unable to copy transfered file '\(filename)' from \(self.p2pManager?.selectedPeer?.peer.name ?? "Sending Peer") from cache to \(directoryName) directory"
-                //                                            alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
-                //                                            defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
-                //
-                //                                        }
-                //                                        alert?.addAction(defaultAction!)
-                //                                        self.present(alert!, animated: true) {() -> Void in }
-                //                                    })
-                //                                    alert?.addAction(okAction)
-                _ = alert.addButton("No", backgroundColor: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
-                    alert.hideView()
-                }
-                _ = alert.addButton("Yes", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+                defaultAction = UIAlertAction(title: "No", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
+                okAction = UIAlertAction(title: "Yes", style: .default, handler: {(_ action: UIAlertAction?) -> Void in
+                
                     self.waitToDismissAlert()
-                    let alert = SCLAlertView(appearance: appearance)
-                    //                                        var alert: UIAlertController?
-                    //                                        var defaultAction: UIAlertAction?
+
+                    var alert: UIAlertController
+                    var defaultAction: UIAlertAction
                     var message = ""
-                    var title = ""
                     do {
-//                        var local_saved_url: NSURL? = nil
                         try self.saveFileWithoutMetadata(from: finalCacheURL, to: saved_url)
                         try filemgr.removeItem(at: fileCacheURL)
                         try filemgr.removeItem(at: finalCacheURL)
-//                        try filemgr.replaceItem(at: saved_url, withItemAt: fileCacheURL, backupItemName: nil, options: .usingNewMetadataOnly, resultingItemURL: &local_saved_url)
-//                        print(local_saved_url ?? "unknown")
                         message = "File '\(filename)' transfered from \(peer.displayName) from cache to \(directoryName) directory"
-                        //                                            alert = UIAlertController(title: "P2P Transfer Complete", message: message, preferredStyle: .alert)
-                        title = "P2P Transfer Complete"
-                        //                                            defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
+                        alert = UIAlertController(title: "P2P Transfer Complete", message: message, preferredStyle: .alert)
+                        defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
                     }
                     catch {
                         message = "Unable to copy transfered file '\(filename)' from \(peer.displayName) from cache to \(directoryName) directory"
-                        //                                            alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
-                        title = "P2P Transfer Error"
-                        //                                            defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
-                        
+                        alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
+                        defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
                     }
-                    //                                        alert?.addAction(defaultAction!)
-                    //                                        self.present(alert!, animated: true) {() -> Void in }
-                    _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
-                        alert.hideView()
-                    }
-                    if title.contains("Error") {
-                        _ = alert.showError(title, subTitle: message)
-                    }
-                    else {
-                        _ = alert.showSuccess(title, subTitle: message)
-                    }
-                }//)
+                    alert.addAction(defaultAction)
+                    self.present(alert, animated: true) {() -> Void in }
+                })
+    //                _ = alert.addButton("No", backgroundColor: UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+    //                    alert.hideView()
+    //                }
+    //                _ = alert.addButton("Yes", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+    //                    self.waitToDismissAlert()
+    //                    let alert = SCLAlertView(appearance: appearance)
+    //                    //                                        var alert: UIAlertController?
+    //                    //                                        var defaultAction: UIAlertAction?
+    //                    var message = ""
+    //                    var title = ""
+    //                    do {
+    //                        try self.saveFileWithoutMetadata(from: finalCacheURL, to: saved_url)
+    //                        try filemgr.removeItem(at: fileCacheURL)
+    //                        try filemgr.removeItem(at: finalCacheURL)
+    //
+    //                        message = "File '\(filename)' transfered from \(peer.displayName) from cache to \(directoryName) directory"
+    //                        title = "P2P Transfer Complete"
+    //                    }
+    //                    catch {
+    //                        message = "Unable to copy transfered file '\(filename)' from \(peer.displayName) from cache to \(directoryName) directory"
+    //                        //                                            alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
+    //                        title = "P2P Transfer Error"
+    //                        //                                            defaultAction = UIAlertAction(title: "OK", style: .default, handler: {(_ action: UIAlertAction?) -> Void in })
+    //                        
+    //                    }
+    //                    _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+    //                        alert.hideView()
+    //                    }
+    //                    if title.contains("Error") {
+    //                        _ = alert.showError(title, subTitle: message)
+    //                    }
+    //                    else {
+    //                        _ = alert.showSuccess(title, subTitle: message)
+    //                    }
+    //                }
             }
             else {
                 do {
                     try self.saveFileWithoutMetadata(from: fileCacheURL, to: saved_url)
-//                    try filemgr.copyItem(at: fileCacheURL, to: saved_url)
                     try filemgr.removeItem(at: fileCacheURL)
                     try filemgr.removeItem(at: finalCacheURL)
                     message = "File '\(filename)' transfered from \(peer.displayName) from cache to \(directoryName) directory"
-                    //                                        alert = UIAlertController(title: "P2P Transfer Complete", message: message, preferredStyle: .alert)
                     title = "P2P Transfer Complete"
                 }
                 catch {
                     message = "Unable to copy transfered file '\(filename)' from \(peer.displayName) from cache to \(directoryName) directory"
-                    //                                        alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
                     title = "P2P Transfer Error"
                 }
             }
         }
         else {
             message = "Unable to change to the \(directoryName) directory!!"
-            //                                alert = UIAlertController(title: "P2P Transfer Error", message: message, preferredStyle: .alert)
             title = "P2P Transfer Error"
         }
         
-        
-        if title.contains("Error") {
-            _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
-                alert.hideView()
-            }
-            _ = alert.showError(title, subTitle: message)
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        if let okAction = okAction {
+            alert.addAction(okAction)
         }
-        else if title.contains("Alert") {
-            _ = alert.showInfo(title, subTitle: message)
+        if let defaultAction = defaultAction {
+            alert.addAction(defaultAction)
         }
-        else {
-            _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
-                alert.hideView()
-            }
-            _ = alert.showSuccess(title, subTitle: message)
-        }
+    
+        present(alert, animated: true, completion: nil)
+//        if title.contains("Error") {
+//            _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+//                alert.hideView()
+//            }
+//            _ = alert.showError(title, subTitle: message)
+//        }
+//        else if title.contains("Alert") {
+//            _ = alert.showInfo(title, subTitle: message)
+//        }
+//        else {
+//            _ = alert.addButton("OK", backgroundColor: UIColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 0.8), textColor: UIColor.white) {
+//                alert.hideView()
+//            }
+//            _ = alert.showSuccess(title, subTitle: message)
+//        }
     }
     
     func saveFileWithoutMetadata(from sourceURL: URL, to destinationURL: URL) throws {
@@ -639,9 +537,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
 //              lengthData.count == 4 else {
 //            return nil
 //        }
-//        
+//
 //        let metadataLength = lengthData.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
-//        
+//
 //        // Skip metadata bytes
 //        try? fileHandle.seek(toOffset: 4 + UInt64(metadataLength))
         
@@ -662,37 +560,38 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
         return "unknown"
     }
     
-    // MARK: - Dismiss Alert and wait
-    
     func waitToDismissAlert() {
-        if (presentedViewController is UIAlertController) {
-            dismiss(animated: false) {() -> Void in }
-            let delayInSeconds: Int = 3
-            
-            let popTime = DispatchTime.now() + DispatchTimeInterval.seconds(delayInSeconds * Int(NSEC_PER_SEC))
-            
-            DispatchQueue.main.asyncAfter(deadline: popTime , execute: {() -> Void in
-                print("Wait for UIAlertController to be dismissed fully(P2PViewController)")
-            })
-        }
-        if (presentedViewController is UIAlertController) {
-            print("UIAlertController isn't dismissed yet(P2PViewController)")
+        guard presentedViewController is UIAlertController else { return }
+
+        dismiss(animated: false)
+
+        Task {
+            // Sleep 3 seconds
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+
+            await MainActor.run {
+                if self.presentedViewController is UIAlertController {
+                    print("UIAlertController isn't dismissed yet (P2PViewController)")
+                } else {
+                    print("Waited for UIAlertController to be dismissed fully (P2PViewController)")
+                }
+            }
         }
     }
     
     // MARK: - UITableView visibility
     
     func updateTableVisibility() {
-        self.noDevicesLabel?.isHidden = mpcManager.foundPeers.count > 0
-        self.devicesTable?.isHidden = mpcManager.foundPeers.count == 0
-        self.searchingForDevicesView?.isHidden = mpcManager.foundPeers.count > 0
+        self.noDevicesLabel?.isHidden = peers.count > 0
+        self.devicesTable?.isHidden = peers.count == 0
+        self.searchingForDevicesView?.isHidden = peers.count > 0
     }
     
     
     // MARK: - CircularProgressView Action
     
     @objc func onCircularProgressViewTouchUpInside(_ sender: Any?) {
-        mpcManager.session?.disconnect()
+        sessionManager.stop()
     }
     
     // MARK: - Load Resources
@@ -712,7 +611,55 @@ class ViewController: UIViewController, UINavigationControllerDelegate, MPCManag
             view.backgroundColor = UIColor(patternImage: image)
         }
     }
+    
+    // MARK: - Alerts
+    
+    private func showAlert(title: String, message: String, actions: [UIAlertAction]? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        if let actions = actions {
+            for action in actions {
+                alert.addAction(action)
+            }
+        }
+        else {
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+        }
+        present(alert, animated: true)
+        
+        if actions == nil {
+            Task {
+                try? await Task.sleep(nanoseconds: 3_500_000_000) // 3.5 seconds
+                await MainActor.run {
+                    alert.dismiss(animated: true)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Restart Session
+    
+    @MainActor
+    func restartSession() async {
+        sessionManager.stop()
+        try? await Task.sleep(nanoseconds: 2_000_000_000) // wait 2 second
+        await sessionManager.setup()
+        await sessionManager.setDelegate(delegate: self)
+        await sessionManager.start()
+        if let mpcActor = sessionManager.mpcActor {
+            sessionManager.wireProgressCallback(from: mpcActor) //{ [weak self] filename, peerName, progress in
+            //            guard let strongSelf = self else { return }
+            //            strongSelf.updateProgress(for: peerName, filename: filename, progress: progress)
+            //        }
+        }
+        await sessionManager.mpcActor?.setPresentingViewController { [weak self] in
+            self ?? UIViewController()
+        }
+    }
 }
+
+// MARK: - Extensions
+
+// MARK: - UIImagePickerController Delegates
 
 extension ViewController: UIImagePickerControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
@@ -753,16 +700,16 @@ extension ViewController: UIImagePickerControllerDelegate {
 
 }
 
+// MARK: - PeerSession TableView DataSource & Delegate
 extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return mpcManager.foundPeers.count
+        return peers.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if indexPath.row < mpcManager.foundPeers.count {
-            let peer = mpcManager.foundPeers[indexPath.row]
+        if indexPath.row < peers/*mpcManager.foundPeers*/.count {
             let cell = tableView.dequeueReusableCell(withIdentifier: "PeerCell") ?? UITableViewCell(style: .default, reuseIdentifier: "PeerCell")
-            cell.textLabel?.text = peer.displayName
+            cell.textLabel?.text = peers[indexPath.row].displayName
             return cell
         }
         else {
@@ -773,6 +720,7 @@ extension ViewController: UITableViewDataSource {
     
 }
 
+// MARK: - PeerSession TableView Delegates Extensions
 extension ViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -785,11 +733,19 @@ extension ViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let peer = mpcManager.foundPeers[indexPath.row]
-        mpcManager.invitePeer(peer)
+//        let peer = mpcManager.foundPeers[indexPath.row]
+//        mpcManager.invitePeer(peer)
+        let peer = peers[indexPath.row]
+        Task {
+            sessionManager.invitePeer(peer, context: nil)
+            await MainActor.run {
+                self.statusLabel?.text = "Inviting \(peer.displayName)…"
+            }
+        }
     }
 }
 
+// MARK: - UIImage Extensions
 extension UIImage {
     /// Returns a new image with a solid background color.
     /// - Parameters:
@@ -907,14 +863,16 @@ extension UIImage {
         }
 }
 
+// MARK: - String Extensions
 extension String {
     func fileExtension() -> String? {
         return (self as NSString).pathExtension.lowercased()
     }
 }
 
+// MARK: - QLPreviewController DataSource
 extension ViewController: QLPreviewControllerDataSource {
-    // MARK: - QLPreviewControllerDataSource
+    
     func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
         return previewItem != nil ? 1 : 0
     }
@@ -922,4 +880,205 @@ extension ViewController: QLPreviewControllerDataSource {
     func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
         return previewItem! as NSURL
     }
+}
+
+// MARK: - PeerSessionManager Delegate
+extension ViewController: PeerSessionManagerDelegate {
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didUpdateStatus status: String, filename: String?, with peer: MCPeerID) {
+        Task { @MainActor in
+            self.showAlert(title: "Status", message: status)
+            self.statusLabel?.text = status + "\(peer.displayName)"
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didConnectTo peer: MCPeerID) {
+        Task { @MainActor in
+            self.showAlert(title: "Status", message: "Connected to \(peer.displayName)")
+            self.statusLabel?.text = "Connected to \(peer.displayName)"
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didDisconnectFrom peer: MCPeerID) {
+        Task { @MainActor in
+            let cancel = UIAlertAction(title: "Cancel", style: .cancel)
+            let reconnect = UIAlertAction(title: "Reconnect", style: .default) { _ in
+                Task {
+                    await self.restartSession()
+                }
+            }
+            self.showAlert(title: "Status", message: "Disconnected from \(peer.displayName).  Would you like to restart the session?", actions: [cancel, reconnect])
+            self.statusLabel?.text = "Disconnected from \(peer.displayName)"
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didFindPeer peer: MCPeerID) {
+        Task { @MainActor in
+            if !self.peers.contains(peer) {
+                self.peers.append(peer)
+                self.devicesTable?.reloadData()
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didLosePeer peer: MCPeerID) {
+        Task { @MainActor in
+            if let index = self.peers.firstIndex(of: peer) {
+                self.peers.remove(at: index)
+                self.devicesTable?.reloadData()
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didChangeState state: MCSessionState, with peer: MCPeerID) {
+        let description: String
+        switch state {
+            case .connected: 
+                description = "Connected to \(peer.displayName)"
+            case .connecting: 
+                description = "Connecting to \(peer.displayName)..."
+            case .notConnected: 
+                description = "Disconnected from \(peer.displayName)"
+            @unknown default: 
+                description = "Unknown state with \(peer.displayName)"
+        }
+//        Task { @MainActor in
+//            self.statusLabel?.text = description
+////            if state == .connected {
+////                self.activityIndicator.stopAnimating()
+////            }
+//        }
+        MainActor.assumeIsolated {
+            self.statusLabel?.text = description
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didSendFile fileURL: URL, metadata: FileTransferMetadata, to peers: [MCPeerID]) {
+        
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didReceiveFile url: URL, metadata: FileTransferMetadata, from peer: MCPeerID) {
+        Task { @MainActor in
+            self.statusLabel?.text = "Received file from \(peer.displayName): \(url.lastPathComponent)"
+            
+            //saveFile(data, metadata: metadata, fileCacheURL: fileURL, peer: peer)
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 360.0
+                circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
+                progressView.isHidden = true
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didStartSendingFile fileURL: URL, metadata: FileTransferMetadata, to peers: [MCPeerID]) {
+        Task { @MainActor in
+            self.statusLabel?.text = "Started sending file: \(fileURL.lastPathComponent)"
+            if let progressView {
+                self.view.sendSubviewToBack(progressView)
+                progressView.isHidden = false
+                circularProgressLabel?.text = "Current Transfer: starting"
+                circularProgressView?.angle = 0.0
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didUpdateProgress progress: Progress, forSendingFileNamed filename: String, to peers: [MCPeerID]) {
+        Task { @MainActor in
+            self.statusLabel?.text = String(format: "Sending %@: %.0f%%", filename, progress.fractionCompleted * 100)
+            circularProgressView?.progress = progress.fractionCompleted * 100.0
+            if let _ = progressView {
+                circularProgressLabel?.text = "Current Transfer: starting"
+                //circularProgressView?.angle = 0.0
+                let newAngleValue = progress.fractionCompleted * 360.0
+                circularProgressView?.animate(toAngle: newAngleValue, duration: 0.5, completion: nil)
+            }
+        }
+        
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didFinishSendingFile fileURL: URL, metadata: FileTransferMetadata, to peers: [MCPeerID]) {
+        Task { @MainActor in
+            self.statusLabel?.text = "Finished sending file: \(fileURL.lastPathComponent)"
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 360.0
+                circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
+                progressView.isHidden = true
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didFailToSendFile fileURL: URL, metadata: FileTransferMetadata?, to peers: [MCPeerID]?, error: any Error) {
+        Task { @MainActor in
+            self.statusLabel?.text = "Send Error: \(error.localizedDescription)"
+            
+            showAlert(title: "Send Failed", message: error.localizedDescription)
+            self.fileContentType = ""
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 360.0
+                circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
+                progressView.isHidden = true
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didStartReceivingFile fileURL: URL, metadata: FileTransferMetadata, from peer: MCPeerID) {
+        Task { @MainActor in
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                progressView.isHidden = false
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 0.0
+                circularProgressView?.animate(toAngle: 0.0, duration: 0.5, completion: nil)
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didUpdateProgress progress: Progress, forReceivingFileNamed filename: String, from peer: MCPeerID) {
+        Task { @MainActor in
+            self.statusLabel?.text = String(format: "Receiving %@ from %@: %.0f%%", filename, peer.displayName, progress.fractionCompleted * 100)
+            circularProgressView?.progress = progress.fractionCompleted * 100.0
+            if let _ = progressView {
+                circularProgressLabel?.text = "Current Transfer: starting"
+                //circularProgressView?.angle = 0.0
+                let newAngleValue = progress.fractionCompleted * 360.0
+                circularProgressView?.animate(toAngle: newAngleValue, duration: 0.5, completion: nil)
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didFinishReceivingFile fileURL: URL, metadata: FileTransferMetadata, from peer: MCPeerID) {
+        Task { @MainActor in
+            saveFile(nil, metadata: metadata, fileCacheURL: fileURL, peer: peer)
+            self.filesize = 0
+            self.fileContentType = ""
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 360.0
+                circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
+                progressView.isHidden = true
+            }
+        }
+    }
+    
+    nonisolated func peerSessionManager(_ manager: PeerSessionManager?, didFailToReceiveFile fileURL: URL, metadata: FileTransferMetadata?, from peer: MCPeerID?, error: any Error) {
+        guard let peer else { return }
+        Task { @MainActor in
+            self.statusLabel?.text = "Receive Error with \(peer.displayName): \(error.localizedDescription)"
+            if let progressView {
+                self.view.bringSubviewToFront(progressView)
+                circularProgressLabel?.text = "Current Transfer: ending"
+                circularProgressView?.angle = 360.0
+                circularProgressView?.animate(toAngle: 360.0, duration: 0.5, completion: nil)
+                progressView.isHidden = true
+            }
+        }
+    }
+    
 }

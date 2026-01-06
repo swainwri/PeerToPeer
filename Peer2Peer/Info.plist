@@ -31,11 +31,11 @@
 	<string>This app uses Bluetooth to find nearby devices for file sharing.</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_fileshareios._tcp</string>
+		<string>_p2p-fileshare._tcp</string>
 	</array>
-    <key>UIFileSharingEnabled</key>
-    <true/>
-    <key>LSSupportsOpeningDocumentsInPlace</key>
-    <true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>

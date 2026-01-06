@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E33339622F0CC84700D1AE35 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = E33339612F0CC84700D1AE35 /* ZIPFoundation */; };
+		E33339642F0CC87800D1AE35 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = E33339632F0CC87800D1AE35 /* ZIPFoundation */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E32623E82DA2292600A7A5A2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +26,29 @@
 			remoteGlobalIDString = E32623D02DA2292400A7A5A2;
 			remoteInfo = PeerToPeer;
 		};
+		E3EB89962DCA4D4400E3F7CC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E32623C92DA2292400A7A5A2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E3EB897F2DCA4D4200E3F7CC;
+			remoteInfo = Peer2Peer;
+		};
+		E3EB89A02DCA4D4400E3F7CC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E32623C92DA2292400A7A5A2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E3EB897F2DCA4D4200E3F7CC;
+			remoteInfo = Peer2Peer;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		E32623D12DA2292400A7A5A2 /* PeerToPeer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PeerToPeer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E32623E72DA2292600A7A5A2 /* PeerToPeerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeerToPeerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E32623F12DA2292600A7A5A2 /* PeerToPeerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeerToPeerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3EB89802DCA4D4200E3F7CC /* Peer2Peer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Peer2Peer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3EB89952DCA4D4400E3F7CC /* Peer2PeerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Peer2PeerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E3EB899F2DCA4D4400E3F7CC /* Peer2PeerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Peer2PeerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -34,8 +56,32 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				ResumeManager.swift,
 			);
 			target = E32623D02DA2292400A7A5A2 /* PeerToPeer */;
+		};
+		E3CF5CE82F04C34E004DB80F /* Exceptions for "Peer2Peer" folder in "PeerToPeer" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = E32623D02DA2292400A7A5A2 /* PeerToPeer */;
+		};
+		E3EB89A72DCA4D4400E3F7CC /* Exceptions for "Peer2Peer" folder in "Peer2Peer" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ContentView.swift,
+				Info.plist,
+			);
+			target = E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */;
+		};
+		E3F48F132DCAF7FC00EC179F /* Exceptions for "PeerToPeer" folder in "Peer2Peer" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				KDCircularProgress.swift,
+			);
+			target = E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -44,6 +90,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E32623F92DA2292600A7A5A2 /* Exceptions for "PeerToPeer" folder in "PeerToPeer" target */,
+				E3F48F132DCAF7FC00EC179F /* Exceptions for "PeerToPeer" folder in "Peer2Peer" target */,
 			);
 			path = PeerToPeer;
 			sourceTree = "<group>";
@@ -58,6 +105,25 @@
 			path = PeerToPeerUITests;
 			sourceTree = "<group>";
 		};
+		E3EB89812DCA4D4200E3F7CC /* Peer2Peer */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E3CF5CE82F04C34E004DB80F /* Exceptions for "Peer2Peer" folder in "PeerToPeer" target */,
+				E3EB89A72DCA4D4400E3F7CC /* Exceptions for "Peer2Peer" folder in "Peer2Peer" target */,
+			);
+			path = Peer2Peer;
+			sourceTree = "<group>";
+		};
+		E3EB89982DCA4D4400E3F7CC /* Peer2PeerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Peer2PeerTests;
+			sourceTree = "<group>";
+		};
+		E3EB89A22DCA4D4400E3F7CC /* Peer2PeerUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Peer2PeerUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E33339642F0CC87800D1AE35 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,6 +149,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E3EB897D2DCA4D4200E3F7CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E33339622F0CC84700D1AE35 /* ZIPFoundation in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB89922DCA4D4400E3F7CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB899C2DCA4D4400E3F7CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -91,6 +180,10 @@
 				E32623D32DA2292400A7A5A2 /* PeerToPeer */,
 				E32623EA2DA2292600A7A5A2 /* PeerToPeerTests */,
 				E32623F42DA2292600A7A5A2 /* PeerToPeerUITests */,
+				E3EB89812DCA4D4200E3F7CC /* Peer2Peer */,
+				E3EB89982DCA4D4400E3F7CC /* Peer2PeerTests */,
+				E3EB89A22DCA4D4400E3F7CC /* Peer2PeerUITests */,
+				E3F48F0F2DCADF8700EC179F /* Frameworks */,
 				E32623D22DA2292400A7A5A2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,8 +194,18 @@
 				E32623D12DA2292400A7A5A2 /* PeerToPeer.app */,
 				E32623E72DA2292600A7A5A2 /* PeerToPeerTests.xctest */,
 				E32623F12DA2292600A7A5A2 /* PeerToPeerUITests.xctest */,
+				E3EB89802DCA4D4200E3F7CC /* Peer2Peer.app */,
+				E3EB89952DCA4D4400E3F7CC /* Peer2PeerTests.xctest */,
+				E3EB899F2DCA4D4400E3F7CC /* Peer2PeerUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E3F48F0F2DCADF8700EC179F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -125,6 +228,7 @@
 			);
 			name = PeerToPeer;
 			packageProductDependencies = (
+				E33339632F0CC87800D1AE35 /* ZIPFoundation */,
 			);
 			productName = PeerToPeer;
 			productReference = E32623D12DA2292400A7A5A2 /* PeerToPeer.app */;
@@ -176,6 +280,75 @@
 			productReference = E32623F12DA2292600A7A5A2 /* PeerToPeerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3EB89A82DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2Peer" */;
+			buildPhases = (
+				E3EB897C2DCA4D4200E3F7CC /* Sources */,
+				E3EB897D2DCA4D4200E3F7CC /* Frameworks */,
+				E3EB897E2DCA4D4200E3F7CC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E3EB89812DCA4D4200E3F7CC /* Peer2Peer */,
+			);
+			name = Peer2Peer;
+			packageProductDependencies = (
+				E33339612F0CC84700D1AE35 /* ZIPFoundation */,
+			);
+			productName = Peer2Peer;
+			productReference = E3EB89802DCA4D4200E3F7CC /* Peer2Peer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E3EB89942DCA4D4400E3F7CC /* Peer2PeerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3EB89AB2DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2PeerTests" */;
+			buildPhases = (
+				E3EB89912DCA4D4400E3F7CC /* Sources */,
+				E3EB89922DCA4D4400E3F7CC /* Frameworks */,
+				E3EB89932DCA4D4400E3F7CC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E3EB89972DCA4D4400E3F7CC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E3EB89982DCA4D4400E3F7CC /* Peer2PeerTests */,
+			);
+			name = Peer2PeerTests;
+			packageProductDependencies = (
+			);
+			productName = Peer2PeerTests;
+			productReference = E3EB89952DCA4D4400E3F7CC /* Peer2PeerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E3EB899E2DCA4D4400E3F7CC /* Peer2PeerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3EB89AE2DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2PeerUITests" */;
+			buildPhases = (
+				E3EB899B2DCA4D4400E3F7CC /* Sources */,
+				E3EB899C2DCA4D4400E3F7CC /* Frameworks */,
+				E3EB899D2DCA4D4400E3F7CC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E3EB89A12DCA4D4400E3F7CC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E3EB89A22DCA4D4400E3F7CC /* Peer2PeerUITests */,
+			);
+			name = Peer2PeerUITests;
+			packageProductDependencies = (
+			);
+			productName = Peer2PeerUITests;
+			productReference = E3EB899F2DCA4D4400E3F7CC /* Peer2PeerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,7 +357,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					E32623D02DA2292400A7A5A2 = {
 						CreatedOnToolsVersion = 16.3;
@@ -197,6 +370,17 @@
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = E32623D02DA2292400A7A5A2;
 					};
+					E3EB897F2DCA4D4200E3F7CC = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					E3EB89942DCA4D4400E3F7CC = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = E3EB897F2DCA4D4200E3F7CC;
+					};
+					E3EB899E2DCA4D4400E3F7CC = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = E3EB897F2DCA4D4200E3F7CC;
+					};
 				};
 			};
 			buildConfigurationList = E32623CC2DA2292400A7A5A2 /* Build configuration list for PBXProject "PeerToPeer" */;
@@ -208,6 +392,9 @@
 			);
 			mainGroup = E32623C82DA2292400A7A5A2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E33339602F0CC84700D1AE35 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E32623D22DA2292400A7A5A2 /* Products */;
 			projectDirPath = "";
@@ -216,6 +403,9 @@
 				E32623D02DA2292400A7A5A2 /* PeerToPeer */,
 				E32623E62DA2292600A7A5A2 /* PeerToPeerTests */,
 				E32623F02DA2292600A7A5A2 /* PeerToPeerUITests */,
+				E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */,
+				E3EB89942DCA4D4400E3F7CC /* Peer2PeerTests */,
+				E3EB899E2DCA4D4400E3F7CC /* Peer2PeerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -236,6 +426,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E32623EF2DA2292600A7A5A2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB897E2DCA4D4200E3F7CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB89932DCA4D4400E3F7CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB899D2DCA4D4400E3F7CC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -266,6 +477,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E3EB897C2DCA4D4200E3F7CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB89912DCA4D4400E3F7CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3EB899B2DCA4D4400E3F7CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -278,6 +510,16 @@
 			isa = PBXTargetDependency;
 			target = E32623D02DA2292400A7A5A2 /* PeerToPeer */;
 			targetProxy = E32623F22DA2292600A7A5A2 /* PBXContainerItemProxy */;
+		};
+		E3EB89972DCA4D4400E3F7CC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */;
+			targetProxy = E3EB89962DCA4D4400E3F7CC /* PBXContainerItemProxy */;
+		};
+		E3EB89A12DCA4D4400E3F7CC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E3EB897F2DCA4D4200E3F7CC /* Peer2Peer */;
+			targetProxy = E3EB89A02DCA4D4400E3F7CC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -297,6 +539,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.8;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -325,6 +568,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.8;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -397,6 +641,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -454,6 +699,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -531,6 +777,136 @@
 			};
 			name = Release;
 		};
+		E3EB89A92DCA4D4400E3F7CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Peer2Peer/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2Peer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E3EB89AA2DCA4D4400E3F7CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Peer2Peer/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2Peer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E3EB89AC2DCA4D4400E3F7CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2PeerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Peer2Peer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Peer2Peer";
+			};
+			name = Debug;
+		};
+		E3EB89AD2DCA4D4400E3F7CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2PeerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Peer2Peer.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Peer2Peer";
+			};
+			name = Release;
+		};
+		E3EB89AF2DCA4D4400E3F7CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2PeerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Peer2Peer;
+			};
+			name = Debug;
+		};
+		E3EB89B02DCA4D4400E3F7CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HGMRL5A68M;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whichtoolface.Peer2PeerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Peer2Peer;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -570,7 +946,58 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		E3EB89A82DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2Peer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3EB89A92DCA4D4400E3F7CC /* Debug */,
+				E3EB89AA2DCA4D4400E3F7CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E3EB89AB2DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2PeerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3EB89AC2DCA4D4400E3F7CC /* Debug */,
+				E3EB89AD2DCA4D4400E3F7CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E3EB89AE2DCA4D4400E3F7CC /* Build configuration list for PBXNativeTarget "Peer2PeerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3EB89AF2DCA4D4400E3F7CC /* Debug */,
+				E3EB89B02DCA4D4400E3F7CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E33339602F0CC84700D1AE35 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E33339612F0CC84700D1AE35 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E33339602F0CC84700D1AE35 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+		E33339632F0CC87800D1AE35 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E33339602F0CC84700D1AE35 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E32623C92DA2292400A7A5A2 /* Project object */;
 }
